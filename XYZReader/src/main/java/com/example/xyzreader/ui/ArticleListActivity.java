@@ -151,8 +151,8 @@ public class ArticleListActivity extends AppCompatActivity implements
                             + " by "
                             + mCursor.getString(ArticleLoader.Query.AUTHOR));
             holder.thumbnailView.setImageUrl(
-                    // TODO issue: Volley does not load images from https on device.
-                    // Posted issue here: https://discussions.udacity.com/t/volley-not-loading-images-from-https-on-device/37286
+                    // fixed issue: Volley does not load images from https on device.
+                    // posted issue here: https://discussions.udacity.com/t/volley-not-loading-images-from-https-on-device/37286
                     mCursor.getString(ArticleLoader.Query.THUMB_URL),
                     ImageLoaderHelper.getInstance(ArticleListActivity.this).getImageLoader());
             holder.thumbnailView.setAspectRatio(mCursor.getFloat(ArticleLoader.Query.ASPECT_RATIO));
