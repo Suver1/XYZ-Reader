@@ -24,9 +24,7 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/building"
-                    android:transitionName="@string/transition_photo" />
+                    android:scaleType="fitCenter" />
 
                 <View
                     android:layout_width="match_parent"
@@ -89,7 +87,8 @@
                     android:textColor="@color/dark_gray"
                     android:textColorLink="@color/theme_accent"
                     android:textSize="@dimen/detail_body_text_size"
-                    android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier" />
+                    android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier"
+                    android:maxHeight="300dp" /> <!-- TODO Async load article text -->
 
             </com.example.xyzreader.ui.MaxWidthLinearLayout>
         </FrameLayout>
