@@ -39,7 +39,6 @@ public class ArticleDetailFragment extends Fragment implements
     private static final String LOG_TAG = ArticleDetailFragment.class.getSimpleName();
 
     public static final String ARG_ITEM_ID = "item_id";
-    public static final String ARG_ITEM_POSITION = "item_position";
     private static final float PARALLAX_FACTOR = 1.25f;
 
     private Cursor mCursor;
@@ -56,7 +55,6 @@ public class ArticleDetailFragment extends Fragment implements
     private int mScrollY;
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
-    private int mPosition;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -65,10 +63,9 @@ public class ArticleDetailFragment extends Fragment implements
     public ArticleDetailFragment() {
     }
 
-    public static ArticleDetailFragment newInstance(long itemId, int itemPosition) {
+    public static ArticleDetailFragment newInstance(long itemId) {
         Bundle arguments = new Bundle();
         arguments.putLong(ARG_ITEM_ID, itemId);
-        arguments.putInt(ARG_ITEM_POSITION, itemPosition);
         ArticleDetailFragment fragment = new ArticleDetailFragment();
         fragment.setArguments(arguments);
         return fragment;
@@ -81,10 +78,6 @@ public class ArticleDetailFragment extends Fragment implements
         if (getArguments().containsKey(ARG_ITEM_ID)) {
             mItemId = getArguments().getLong(ARG_ITEM_ID);
         }
-        if (getArguments().containsKey(ARG_ITEM_POSITION)) {
-            mPosition = getArguments().getInt(ARG_ITEM_POSITION);
-        }
-
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
         mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(
                 R.dimen.detail_card_top_margin);
@@ -112,8 +105,8 @@ public class ArticleDetailFragment extends Fragment implements
         mRootView = inflater.inflate(R.layout.fragment_article_detail, container, false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Log.e(LOG_TAG, "position:" + mPosition);
-            mRootView.findViewById(R.id.photo).setTransitionName(getString(R.string.transition_photo) + String.valueOf(mPosition));
+            Log.d(LOG_TAG, "setting transition name: " + getString(R.string.transition_photo) + String.valueOf(mItemId));
+            mRootView.findViewById(R.id.photo).setTransitionName(getString(R.string.transition_photo) + String.valueOf(mItemId));
         }
         mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
                 mRootView.findViewById(R.id.draw_insets_frame_layout);
@@ -213,18 +206,6 @@ public class ArticleDetailFragment extends Fragment implements
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
                         public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                if (getActivityCast() != null) {
-                                    Log.e(LOG_TAG, ".. ArticleDetailActivity pos selected: " + getActivityCast().getCurrentPosition());
-                                    Log.e(LOG_TAG, ".. item position: " + mPosition);
-                                    if (mPosition == getActivityCast().getCurrentPosition()) {
-                                        Log.e(LOG_TAG, "Image loaded.. schedule start postponed transition");
-                                        getActivityCast().scheduleStartPostponedTransition(mPhotoView);
-                                    }
-                                } else {
-                                    Log.e(LOG_TAG, "Could not schedule start postponed transition");
-                                }
-                            }
                             Bitmap bitmap = imageContainer.getBitmap();
                             if (bitmap != null) {
                                 Palette p = Palette.generate(bitmap, 12);
@@ -256,6 +237,17 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (getActivityCast() != null) {
+                if (mItemId == getActivityCast().getSelectedItemId()) {
+                    Log.d(LOG_TAG, "Image loaded.. schedule start postponed transition");
+                    getActivityCast().scheduleStartPostponedTransition(mPhotoView);
+                }
+            } else {
+                Log.e(LOG_TAG, "Could not schedule start postponed transition");
+            }
+        }
+
         if (!isAdded()) {
             if (cursor != null) {
                 cursor.close();
@@ -265,6 +257,7 @@ public class ArticleDetailFragment extends Fragment implements
 
         mCursor = cursor;
         if (mCursor != null && !mCursor.moveToFirst()) {
+            // TODO This is triggered when clicking Article List item as soon as the app is loaded
             Log.e(LOG_TAG, "Error reading item detail cursor");
             mCursor.close();
             mCursor = null;

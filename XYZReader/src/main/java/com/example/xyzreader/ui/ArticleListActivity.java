@@ -17,8 +17,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateUtils;
-import android.transition.Explode;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -48,7 +48,6 @@ public class ArticleListActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_article_list);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
 
         final View toolbarContainerView = findViewById(R.id.toolbar_container);
 
@@ -139,7 +138,6 @@ public class ArticleListActivity extends AppCompatActivity implements
                 @Override
                 public void onClick(View view) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-
                         /*
                             (Shared element) Transition basics
                             #1 Capture the start and End state of the target views
@@ -147,30 +145,19 @@ public class ArticleListActivity extends AppCompatActivity implements
                              - size
                              - appearance
                             #2 Create an Animator that will animate the views between the two states
-
-
                          */
                         View thumbnail = view.findViewById(R.id.thumbnail);
-                        //getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+                        Pair pair = new Pair<View, String>(thumbnail, thumbnail.getTransitionName());
                         Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(
                                 ArticleListActivity.this,
-                                thumbnail,
-                                thumbnail.getTransitionName()).toBundle();
-
+                                pair).toBundle();
                         Intent intent = new Intent(Intent.ACTION_VIEW,
-                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())))
-                                .putExtra("transition", view.findViewById(R.id.list_card)
-                                .getTransitionName());
-
-                        //getWindow().setSharedElementEnterTransition(new Explode());
-                        //getWindow().setSharedElementExitTransition(new Explode());
+                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
                         startActivity(intent, bundle);
                     } else {
-
-                    startActivity(new Intent(Intent.ACTION_VIEW,
-                            ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
                     }
-
                 }
             });
             return vh;
@@ -180,7 +167,11 @@ public class ArticleListActivity extends AppCompatActivity implements
         public void onBindViewHolder(ViewHolder holder, int position) {
             mCursor.moveToPosition(position);
             holder.titleView.setText(mCursor.getString(ArticleLoader.Query.TITLE));
-            holder.thumbnailView.setTransitionName(getString(R.string.transition_photo) + position);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                holder.thumbnailView.setTransitionName(getString(R.string.transition_photo) +
+                        mCursor.getLong(ArticleLoader.Query._ID));
+                Log.d(LOG_TAG, "setting transition name: " + holder.thumbnailView.getTransitionName());
+            }
             holder.subtitleView.setText(
                     DateUtils.getRelativeTimeSpanString(
                             mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),

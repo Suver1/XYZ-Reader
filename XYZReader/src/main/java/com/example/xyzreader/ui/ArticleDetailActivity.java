@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
-import android.widget.ImageView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
@@ -41,7 +40,6 @@ public class ArticleDetailActivity extends AppCompatActivity
     private MyPagerAdapter mPagerAdapter;
     private View mUpButtonContainer;
     private View mUpButton;
-    private int mCurrentPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +49,6 @@ public class ArticleDetailActivity extends AppCompatActivity
 
             // Postpone the shared element transition
             postponeEnterTransition(); // Don't forget to call scheduleStartPostponedTransition()
-
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                             View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
@@ -78,12 +75,10 @@ public class ArticleDetailActivity extends AppCompatActivity
 
             @Override
             public void onPageSelected(int position) {
-                // TODO ISSUE onPageSelected is not run when first page (position 0) is selected
                 if (mCursor != null) {
                     mCursor.moveToPosition(position);
-                    Log.e(LOG_TAG, "currentpos: " + mCurrentPosition);
-                    mCurrentPosition = position;
                     mSelectedItemId = mCursor.getLong(ArticleLoader.Query._ID);
+                    // TODO update/disable return animation
                 }
                 updateUpButtonPosition();
             }
@@ -148,8 +143,8 @@ public class ArticleDetailActivity extends AppCompatActivity
                 });
     }
 
-    public int getCurrentPosition() {
-        return mCurrentPosition;
+    public long getSelectedItemId() {
+        return mSelectedItemId;
     }
 
     @Override
@@ -165,7 +160,6 @@ public class ArticleDetailActivity extends AppCompatActivity
         // Select the start ID
         if (mStartId > 0) {
             mCursor.moveToFirst();
-            // TODO: optimize
             while (!mCursor.isAfterLast()) {
                 if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
                     final int position = mCursor.getPosition();
@@ -204,7 +198,6 @@ public class ArticleDetailActivity extends AppCompatActivity
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
-            mCurrentPosition = position; // Note: This is called MANY times per page selected!
             ArticleDetailFragment fragment = (ArticleDetailFragment) object;
             if (fragment != null) {
                 mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
@@ -214,9 +207,9 @@ public class ArticleDetailActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int position) {
-            Log.e(LOG_TAG, "Starting new instance of ArticleDetailFragment: " + position);
+            Log.d(LOG_TAG, "Starting new instance of ArticleDetailFragment: " + position);
             mCursor.moveToPosition(position);
-            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID), position);
+            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
         }
 
         @Override
