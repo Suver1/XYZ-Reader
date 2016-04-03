@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -22,14 +24,13 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
 
-import java.util.List;
-import java.util.Map;
 
 /**
  * An activity representing a list of Articles. This activity has different presentations for
@@ -50,10 +51,8 @@ public class ArticleListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
         //setExitSharedElementCallback(mCallback);
-
+        isOnline(true);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
-        final View toolbarContainerView = findViewById(R.id.toolbar_container);
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
 
@@ -61,8 +60,10 @@ public class ArticleListActivity extends AppCompatActivity implements
         getLoaderManager().initLoader(0, null, this);
 
         if (savedInstanceState == null) {
-            Log.e(LOG_TAG, "refresh()");
-            //refresh(); // TODO ISSUE: Two activities are sometimes starting simultaneously
+            //Log.d(LOG_TAG, "refresh()");
+            refresh();
+            // TODO ISSUE: Two activities are sometimes starting simultaneously. refresh() is run
+            // the first time app is ever loaded.
         }
     }
 
@@ -130,6 +131,22 @@ public class ArticleListActivity extends AppCompatActivity implements
         mRecyclerView.setAdapter(null);
     }
 
+    // Check the Network Connection. (permission needed)
+    // Source: http://developer.android.com/intl/ko/training/basics/network-ops/connecting.html
+    private Boolean isOnline(Boolean warn) {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            return true;
+        } else {
+            if (warn) {
+                Toast.makeText(this, "Network connection lost. Please reconnect.", Toast.LENGTH_LONG).show();
+            }
+            return false;
+        }
+    }
+
     private class Adapter extends RecyclerView.Adapter<ViewHolder> {
         private Cursor mCursor;
         private Activity mActivity;
@@ -153,7 +170,8 @@ public class ArticleListActivity extends AppCompatActivity implements
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (isOnline(true)) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         /*
                             (Shared element) Transition basics
                             #1 Capture the start and End state of the target views
@@ -162,14 +180,14 @@ public class ArticleListActivity extends AppCompatActivity implements
                              - appearance
                             #2 Create an Animator that will animate the views between the two states
                          */
-                        View thumbnail = view.findViewById(R.id.thumbnail);
-                        Pair pair = new Pair<View, String>(thumbnail, thumbnail.getTransitionName());
-                        Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(
-                                ArticleListActivity.this,
-                                pair).toBundle();
-                        Intent intent = new Intent(Intent.ACTION_VIEW,
-                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
-                        startActivity(intent, bundle);
+                            View thumbnail = view.findViewById(R.id.thumbnail);
+                            Pair pair = new Pair<View, String>(thumbnail, thumbnail.getTransitionName());
+                            Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(
+                                    ArticleListActivity.this,
+                                    pair).toBundle();
+                            Intent intent = new Intent(Intent.ACTION_VIEW,
+                                    ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
+                            startActivity(intent, bundle);
                         /*Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(
                                 ArticleListActivity.this,
                                 thumbnail,
@@ -180,9 +198,10 @@ public class ArticleListActivity extends AppCompatActivity implements
                                 ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())))
                                 .putExtra("transition", view.findViewById(R.id.list_card)
                                         .getTransitionName());*/
-                    } else {
-                        startActivity(new Intent(Intent.ACTION_VIEW,
-                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
+                        } else {
+                            startActivity(new Intent(Intent.ACTION_VIEW,
+                                    ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
+                        }
                     }
                 }
             });
