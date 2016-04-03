@@ -19,10 +19,19 @@
 
     <style name="Theme.Bacon" parent="@style/Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowContentTransitions">true</item>
+        <item name="android:fitsSystemWindows">true</item>
     </style>
 
     <style name="Theme.Bacon.Detail">
         <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="DetailTitleExpanded" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@android:color/transparent</item>
+    </style>
+
+    <style name="DetailTitleCollapsed" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
 </resources>

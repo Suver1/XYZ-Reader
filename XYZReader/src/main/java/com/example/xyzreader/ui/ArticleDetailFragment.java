@@ -12,6 +12,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
@@ -108,7 +110,7 @@ public class ArticleDetailFragment extends Fragment implements
             Log.d(LOG_TAG, "setting transition name: " + getString(R.string.transition_photo) + String.valueOf(mItemId));
             mRootView.findViewById(R.id.photo).setTransitionName(getString(R.string.transition_photo) + String.valueOf(mItemId));
         }
-        mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
+        /*mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
                 mRootView.findViewById(R.id.draw_insets_frame_layout);
         mDrawInsetsFrameLayout.setOnInsetsCallback(new DrawInsetsFrameLayout.OnInsetsCallback() {
             @Override
@@ -117,7 +119,7 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
-        mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollview);
+        mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollView);
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
             public void onScrollChanged() {
@@ -126,10 +128,9 @@ public class ArticleDetailFragment extends Fragment implements
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
                 updateStatusBar();
             }
-        });
+        });*/
 
         mPhotoView = (ImageView) mRootView.findViewById(R.id.photo);
-        mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
 
         mStatusBarColorDrawable = new ColorDrawable(0);
 
@@ -160,7 +161,7 @@ public class ArticleDetailFragment extends Fragment implements
                     (int) (Color.blue(mMutedColor) * 0.9));
         }
         mStatusBarColorDrawable.setColor(color);
-        mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
+        //mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
     }
 
     static float progress(float v, float min, float max) {
@@ -213,6 +214,30 @@ public class ArticleDetailFragment extends Fragment implements
                                 mPhotoView.setImageBitmap(imageContainer.getBitmap());
                                 mRootView.findViewById(R.id.meta_bar)
                                         .setBackgroundColor(mMutedColor);
+
+                                final CollapsingToolbarLayout collapsingToolbarLayout =
+                                        (CollapsingToolbarLayout) mRootView
+                                                .findViewById(R.id.collapsing_toolbar);
+                                collapsingToolbarLayout.setContentScrimColor(mMutedColor);
+                                collapsingToolbarLayout.setExpandedTitleTextAppearance(R.style
+                                        .DetailTitleExpanded);
+                                collapsingToolbarLayout.setCollapsedTitleTextAppearance(R.style.DetailTitleCollapsed);
+                                //collapsingToolbarLayout.setExpandedTitleColor(mMutedColor);
+                                AppBarLayout appBarLayout = (AppBarLayout) mRootView.findViewById(
+                                        R.id.app_bar_layout
+                                );
+                                appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+                                    @Override
+                                    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                                        float negativeHeight = -mPhotoView.getHeight();
+                                        if (negativeHeight - verticalOffset > -335) {
+                                            collapsingToolbarLayout.setTitle(mCursor.getString(
+                                                    ArticleLoader.Query.TITLE));
+                                        } else {
+                                            collapsingToolbarLayout.setTitle(null);
+                                        }
+                                    }
+                                });
                                 updateStatusBar();
                             }
                         }
@@ -257,7 +282,6 @@ public class ArticleDetailFragment extends Fragment implements
 
         mCursor = cursor;
         if (mCursor != null && !mCursor.moveToFirst()) {
-            // TODO This is triggered when clicking Article List item as soon as the app is loaded
             Log.e(LOG_TAG, "Error reading item detail cursor");
             mCursor.close();
             mCursor = null;
@@ -281,5 +305,9 @@ public class ArticleDetailFragment extends Fragment implements
         return mIsCard
                 ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
                 : mPhotoView.getHeight() - mScrollY;
+    }
+
+    public ImageView getArticleImage() {
+        return mPhotoView;
     }
 }

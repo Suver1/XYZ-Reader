@@ -22,6 +22,9 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * An activity representing a single Article detail screen, letting you swipe between articles.
  */
@@ -31,7 +34,7 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     private Cursor mCursor;
     private long mStartId;
-
+    private boolean mBool = false;
     private long mSelectedItemId;
     private int mSelectedItemUpButtonFloor = Integer.MAX_VALUE;
     private int mTopInset;
@@ -40,6 +43,7 @@ public class ArticleDetailActivity extends AppCompatActivity
     private MyPagerAdapter mPagerAdapter;
     private View mUpButtonContainer;
     private View mUpButton;
+    private ArticleDetailFragment mCurrentDetailsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,11 +89,12 @@ public class ArticleDetailActivity extends AppCompatActivity
         });
 
         mUpButtonContainer = findViewById(R.id.up_container);
-
         mUpButton = findViewById(R.id.action_up);
         mUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //Log.d(LOG_TAG, "NAVIGATING UP");
+                // TODO navigitin up causes the parent activity to be popped of the stack
                 onSupportNavigateUp();
             }
         });
@@ -113,6 +118,11 @@ public class ArticleDetailActivity extends AppCompatActivity
                 mSelectedItemId = mStartId;
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     /**
@@ -158,7 +168,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         mPagerAdapter.notifyDataSetChanged();
 
         // Select the start ID
-        if (mStartId > 0) {
+        if (mStartId > 0 && !mBool) {
             mCursor.moveToFirst();
             while (!mCursor.isAfterLast()) {
                 if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
@@ -168,7 +178,7 @@ public class ArticleDetailActivity extends AppCompatActivity
                 }
                 mCursor.moveToNext();
             }
-            mStartId = 0;
+            mBool = true;
         }
     }
 
@@ -198,9 +208,9 @@ public class ArticleDetailActivity extends AppCompatActivity
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
-            ArticleDetailFragment fragment = (ArticleDetailFragment) object;
-            if (fragment != null) {
-                mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
+            mCurrentDetailsFragment = (ArticleDetailFragment) object;
+            if (mCurrentDetailsFragment != null) {
+                mSelectedItemUpButtonFloor = mCurrentDetailsFragment.getUpButtonFloor();
                 updateUpButtonPosition();
             }
         }

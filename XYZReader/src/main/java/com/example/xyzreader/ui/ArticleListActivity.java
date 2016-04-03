@@ -28,6 +28,9 @@ import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * An activity representing a list of Articles. This activity has different presentations for
  * handset and tablet-size devices. On handsets, the activity presents a list of items, which when
@@ -46,6 +49,7 @@ public class ArticleListActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
+        //setExitSharedElementCallback(mCallback);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -57,7 +61,8 @@ public class ArticleListActivity extends AppCompatActivity implements
         getLoaderManager().initLoader(0, null, this);
 
         if (savedInstanceState == null) {
-            refresh();
+            Log.e(LOG_TAG, "refresh()");
+            //refresh(); // TODO ISSUE: Two activities are sometimes starting simultaneously
         }
     }
 
@@ -68,6 +73,7 @@ public class ArticleListActivity extends AppCompatActivity implements
     @Override
     protected void onStart() {
         super.onStart();
+        //Log.d(LOG_TAG, "STARTING ACTIVITY");
         registerReceiver(mRefreshingReceiver,
                 new IntentFilter(UpdaterService.BROADCAST_ACTION_STATE_CHANGE));
     }
@@ -78,12 +84,19 @@ public class ArticleListActivity extends AppCompatActivity implements
         unregisterReceiver(mRefreshingReceiver);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
     private boolean mIsRefreshing = false;
 
     private BroadcastReceiver mRefreshingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            //Log.d(LOG_TAG, "RECEIVING BROADCAST");
             if (UpdaterService.BROADCAST_ACTION_STATE_CHANGE.equals(intent.getAction())) {
+                //Log.d(LOG_TAG, "REFRESH UI");
                 mIsRefreshing = intent.getBooleanExtra(UpdaterService.EXTRA_REFRESHING, false);
                 updateRefreshingUI();
             }
@@ -96,11 +109,13 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        //Log.d(LOG_TAG, "CREATING LOADER");
         return ArticleLoader.newAllArticlesInstance(this);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        //Log.d(LOG_TAG, "LOADER FINISHED");
         Adapter adapter = new Adapter(cursor, this);
         adapter.setHasStableIds(true);
         mRecyclerView.setAdapter(adapter);
@@ -120,6 +135,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         private Activity mActivity;
 
         public Adapter(Cursor cursor, Activity activity) {
+            //Log.d(LOG_TAG, "ADAPTER STARTED");
             mCursor = cursor;
             mActivity = activity;
         }
@@ -154,6 +170,16 @@ public class ArticleListActivity extends AppCompatActivity implements
                         Intent intent = new Intent(Intent.ACTION_VIEW,
                                 ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
                         startActivity(intent, bundle);
+                        /*Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(
+                                ArticleListActivity.this,
+                                thumbnail,
+                                thumbnail.getTransitionName()).toBundle();*/
+                        /*Log.e(LOG_TAG, "onClick() list card transition name: " +
+                                view.findViewById(R.id.list_card).getTransitionName());*/
+                        /*Intent intent = new Intent(Intent.ACTION_VIEW,
+                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())))
+                                .putExtra("transition", view.findViewById(R.id.list_card)
+                                        .getTransitionName());*/
                     } else {
                         startActivity(new Intent(Intent.ACTION_VIEW,
                                 ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
